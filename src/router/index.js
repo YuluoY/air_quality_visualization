@@ -7,7 +7,12 @@ const routes = [
   {
     path: "/",
     name: "Main",
-    component: () => import("@/views/Main"),
+    component: () => import("@/views/Main")
+  },
+  {
+    path: "/city",
+    name: "City",
+    component: () => import("@/views/CityTemplate")
   }
 ];
 

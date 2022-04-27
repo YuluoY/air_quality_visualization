@@ -1,6 +1,6 @@
 import echarts from "echarts";
 
-export function myChinaMap(id, options) {
+export function myCityMap(id, options) {
   let myEchart = echarts.init(document.getElementById(id));
   let option = {
     visualMap: [{  // 映射-颜色值
@@ -27,7 +27,7 @@ export function myChinaMap(id, options) {
     series: [{
       name: "省份",
       type: "map",  // 配置图表类型
-      map: "china", // 中国地图
+      map: id, // 中国地图
       roam: false,  // 是否允许自动缩放
       zoom: 1.2,    // 地图缩放比例
       label: {      // 配置字体
@@ -55,16 +55,6 @@ export function myChinaMap(id, options) {
       data: options.data
     }]
   };
-  myEchart.on("click", (params) => {
-    const pinyinCityName = this.$pinyin.change(params.name);
-    params.pinyinName = pinyinCityName;
-    this.$echarts.registerMap(pinyinCityName, require(`echarts/map/json/province/${pinyinCityName}.json`));
-    this.$router.push({
-      name: "City",
-      params: params
-    });
-  });
 
   myEchart.setOption(option);
 }
-

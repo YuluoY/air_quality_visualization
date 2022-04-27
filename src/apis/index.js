@@ -1,6 +1,13 @@
-import axios from "axios";
+import axios from "../axios";
 
 export default {
+  // 获取带有province的城市aqi
+  getAll: function() {
+    return axios({
+      url: "/city/all",
+      method: "get"
+    });
+  },
   // 获取省份的aqi数据
   getProvincesAQI: function() {
     return axios({
