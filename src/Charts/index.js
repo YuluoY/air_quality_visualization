@@ -5,7 +5,6 @@ import { myBarChart } from "@/Charts/bar";
 import { myRadarChart } from "@/Charts/radar";
 import echarts from "echarts";
 import { myCityMap } from "@/Charts/cityMap";
-
 const install = function(Vue) {
   // 向 Vue.prototype 上挂载方法
   Object.defineProperties(Vue.prototype, {

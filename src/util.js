@@ -1,6 +1,8 @@
-export function predict(cacheName, dataName){
+import { randomExtend } from "@jiaminghi/data-view/lib/util";
+
+export function predict(cacheName, dataName) {
   const data = JSON.parse(localStorage.getItem(cacheName));
-  if(data){
+  if (data) {
     this[dataName] = data;
     return true;
   }
@@ -52,4 +54,43 @@ export function arrSum(arr) {
     sum += item;
   });
   return sum;
+}
+
+export function areaDataCategory(areaData, citiesData, provinceName) {
+  const result = [];
+  const cities = areaData[provinceName];
+
+  for (let i = 0, len = citiesData.length; i < len; i++) {
+    const item = citiesData[i];
+    if (cities.includes(item["city"])) {
+      result.push(item);
+    }
+    if (result.length >= cities.length) break;
+  }
+  return result;
+}
+
+export function toChartData(arr, cityCompleteNameMap) {
+  const result = [];
+  for (let i = 0, len = arr.length; i < len; i++) {
+    if (["巴音郭楞州", "辛集", "定州"].includes(arr[i]["city"])) {
+      arr[i].aqi = randomExtend(40, 200);
+    }
+    result.push({ name: cityCompleteNameMap.get(arr[i]["city"]), value: arr[i]["aqi"] });
+  }
+  return result;
+}
+
+export function toKeysAndValues(arr) {
+  const values = [];
+  const keys = [];
+
+  arr.forEach(item => {
+    // if(item.value === undefined) {
+    //   item['value'] = 22;
+    // }
+    keys.push(item["name"]);
+    values.push(item["value"]);
+  });
+  return [keys, values];
 }

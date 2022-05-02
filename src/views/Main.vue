@@ -3,9 +3,12 @@
     <header>
       <div class="title">
         <div>{{ title }}</div>
-        <div style="font-size: 1rem;color: #90CBF3;text-align: center">数据来源：中国环境监测总站</div>
+        <div style="font-size: 1rem;color: #90CBF3;text-align: center;z-index: 99999">数据来源：中国环境监测总站</div>
       </div>
-      <div class="date">{{ date | formatterDate }}</div>
+      <div class="date">
+        <div>数据更新时间：{{ date | formatterDate }}</div>
+        <div>下次更新时间：{{ update.gap }}分钟后</div>
+      </div>
     </header>
     <section>
       <div class="left">
@@ -53,13 +56,17 @@
     name: "Main",
     data() {
       return {
+        update: {
+          gap: 0,
+          date: 0
+        },
         config: {
           data: [],
           rowNum: 4,
           sort: false
         },
         title: "《全国空气质量指数实时可视化平台》",
-        date: Date.now(),
+        date: 0,
         totalData: {
           maxAQI: 0,
           minAQI: 0,
@@ -85,10 +92,30 @@
           "西南": ["四川", "贵州", "云南", "重庆", "西藏"]
         },
         allCities: [],
-        categoryCities: []
+        categoryCities: [],
+        cityNameMap: null
       };
     },
     methods: {
+      async findAll() {
+        const bool = predict.call(this, "hyl-charts-all", "cityNameMap");
+        if (bool) {
+          const map = new Map();
+          this.cityNameMap.forEach(item => {
+            const arr = item["mergerName"].split(",");
+            map.set(item["city"], arr[arr.length - 1]);
+          });
+          this.cityNameMap = map;
+        } else {
+          const res = await apis.getAll();
+          this.cityNameMap = new Map();
+          res.data.forEach(item => {
+            const arr = item["mergerName"].split(",");
+            this.cityNameMap.set(item["city"], arr[arr.length - 1]);
+          });
+          localStorage.setItem("hyl-charts-all", JSON.stringify(res.data));
+        }
+      },
       async findCategoryCities() {
         const bool = predict.call(this, "hyl-charts-categoryCities", "categoryCities");
         if (!bool) {
@@ -97,12 +124,12 @@
           localStorage.setItem("hyl-charts-categoryCities", JSON.stringify(res.data));
         }
       },
-      async findCityAll() {
-        const bool = predict.call(this, "hyl-charts-allCities", "allCities");
+      async findCities() {
+        const bool = predict.call(this, "hyl-charts-citiesAQI", "allCities");
         if (!bool) {
-          const res = await apis.getAll();
+          const res = await apis.getCitiesAQI();
           this.allCities = res.data;
-          localStorage.setItem("hyl-charts-allCities", JSON.stringify(res.data));
+          localStorage.setItem("hyl-charts-citiesAQI", JSON.stringify(res.data));
         }
       },
       findProvinces(success) {
@@ -140,6 +167,42 @@
         this.lineOptions.xAxisData = this.totalData.provinces.slice(0, 10);
         this.lineOptions.seriesData = this.totalData.provincesAQI.slice(0, 10);
         this.$charts.line("line", this.lineOptions);
+      },
+      initData() {
+        async function init(callback) {
+          const res1 = await apis.getAll();
+          const res2 = await apis.getCategoryCities();
+          const res3 = await apis.getCitiesAQI();
+          // const res4 = await apis.getOrderCities();
+          const res4 = await apis.getProvincesAQI();
+
+          await callback(res1, res2, res3, res4);
+        }
+
+        init((...args) => {
+          const cacheName = ["hyl-charts-all", "hyl-charts-categoryCities", "hyl-charts-citiesAQI", "hyl-charts-provincesAQI"];
+          args.forEach((res, index, arr) => {
+            localStorage.setItem(cacheName[index], JSON.stringify(res.data));
+          });
+        });
+      },
+      updateTime() {
+        const updateTime = localStorage.getItem("hyl-charts-updateTime");
+        if (updateTime) {
+          const gap = dayjs(Date.now()).minute() - dayjs(updateTime * 1).minute();
+          this.$set(this.update, "date", updateTime * 1);
+          this.$set(this.update, "gap", 60 - gap);
+          if (gap >= 60) {
+            this.initData();
+            location.reload();
+          }
+          console.log(`${60 - gap ? 60 - gap : 60}分钟后更新数据...`);
+          this.date = updateTime * 1;
+        } else {
+          this.$set(this.update, "date", Date.now());
+          localStorage.setItem("hyl-charts-updateTime", this.update.date + "");
+          this.initData();
+        }
       }
     },
     filters: {
@@ -149,10 +212,14 @@
     },
     created() {
       this.findCategoryCities();
-      this.findCityAll();
+      this.findCities();
+      this.findAll();
+      this.updateTime();
+      setInterval(() => {
+        this.updateTime();
+      }, 60000);
     },
     mounted() {
-      setInterval(() => this.date = Date.now(), 1000);
       this.findProvinces(async (data) => {
         data = this.filterProvinces(data);
         if (!localStorage.getItem("hyl-charts-provincesAQI")) {
@@ -190,14 +257,14 @@
     }
 
     header .title {
-        width: 60rem;
+        width: 50rem;
         text-align: right;
         font-size: 2rem;
         font-weight: bolder;
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-left: 14rem;
+        margin-left: 20rem;
         padding-top: 2rem;
         line-height: 2rem;
     }

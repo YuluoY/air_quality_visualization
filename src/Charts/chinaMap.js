@@ -57,11 +57,17 @@ export function myChinaMap(id, options) {
   };
   myEchart.on("click", (params) => {
     const pinyinCityName = this.$pinyin.change(params.name);
+    if (["重庆", "北京", "上海", "天津", "台湾"].includes(params.name)) {
+      alert("数据和地图模型暂不支持！");
+      return;
+    }
     params.pinyinName = pinyinCityName;
+    params.cityNameMap = this.cityNameMap;
     this.$echarts.registerMap(pinyinCityName, require(`echarts/map/json/province/${pinyinCityName}.json`));
     this.$router.push({
       name: "City",
-      params: params
+      params: params,
+      query: { name: params.name }
     });
   });
 

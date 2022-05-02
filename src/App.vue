@@ -2,7 +2,9 @@
   <div id="app">
     <dv-full-screen-container>
       <dv-border-box-1>
-        <router-view></router-view>
+        <keep-alive>
+          <router-view></router-view>
+        </keep-alive>
       </dv-border-box-1>
     </dv-full-screen-container>
   </div>
@@ -10,7 +12,8 @@
 
 <script>
   export default {
-
+    mounted() {
+    }
 
   };
 </script>
